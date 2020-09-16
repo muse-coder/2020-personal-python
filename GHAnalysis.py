@@ -85,9 +85,9 @@ def run():
     args = my_parser.parse_args()
 
     if args.init:
-        my_data = data.Data(path=args.init)
+        my_data = Data(path=args.init)
     else:
-        my_data = data.Data()
+        my_data = Data()
         if args.event:
             if args.user:
                 if args.repo:

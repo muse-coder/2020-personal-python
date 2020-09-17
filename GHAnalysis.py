@@ -17,6 +17,9 @@ class Init_data:
         self.CountOfPerPPerR = json.loads(x)
 
     def __init(self, dic_addr: str):
+        self.CountOfPerP = {}
+        self.CountOfPerR = {}
+        self.CountOfPerPPerR = {}
         json_list = []
         for root, dic, files in os.walk(dic_addr):
             for f in files:
@@ -31,9 +34,6 @@ class Init_data:
                         except:
                             pass
         records = self.__listOfNestedDict2ListOfDict(json_list)
-        self.CountOfPerP = {}
-        self.CountOfPerR = {}
-        self.CountOfPerPPerR = {}
         for i in records:
             if not self.CountOfPerP.get(i['actor__login'], 0):
                 self.CountOfPerP.update({i['actor__login']: {}})

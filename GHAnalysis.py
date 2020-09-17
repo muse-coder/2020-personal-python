@@ -4,7 +4,7 @@ import json
 import os
 
 
-class Data:
+class Initialization:
 
     def __init__(self, path: str = None):
         self.__dir_addr = path
@@ -85,9 +85,9 @@ def run():
     args = my_parser.parse_args()
 
     if args.init:
-        my_data = Data(path=args.init)
+        my_data = Initialization(path=args.init)
     else:
-        my_data = Data()
+        my_data = Initialization()
         if args.event:
             if args.user:
                 if args.repo:

@@ -8,7 +8,7 @@ class Init_data:
         if reload == 1:
             self.__init(dic_addr)
         if dic_addr is None and not os.path.exists('1.json') and not os.path.exists('2.json') and not os.path.exists('3.json'):
-            raise RuntimeError('error: init failed')
+            raise starttimeError('error: init failed')
         x = open('1.json', 'r', encoding='utf-8').read()
         self.CountOfPerP = json.loads(x)
         x = open('2.json', 'r', encoding='utf-8').read()
@@ -92,20 +92,17 @@ class Init_data:
         else:
             return self.CountAll[user][repo].get(event,0)
 
-
-class Run:
+class start:
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.Init_data = None
         self.argInit()
         print(self.analyse())
-
     def argInit(self):
         self.parser.add_argument('-i', '--init')
         self.parser.add_argument('-u', '--user')
         self.parser.add_argument('-r', '--repo')
         self.parser.add_argument('-e', '--event')
-
     def analyse(self):
         if self.parser.parse_args().init:
             self.Init_data = Init_data(self.parser.parse_args().init, 1)
@@ -125,11 +122,11 @@ class Run:
                     res = self.Init_data.Result_Of_Repos(
                         self.parser.parse_args().repo, self.parser.parse_args().event)
                 else:
-                    raise RuntimeError('error: argument -l or -c are required')
+                    raise starttimeError('error: argument -l or -c are required')
             else:
-                raise RuntimeError('error: argument -e is required')
+                raise starttimeError('error: argument -e is required')
         return res
 
 
 if __name__ == '__main__':
-    a = Run()
+    a = start()

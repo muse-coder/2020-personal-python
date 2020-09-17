@@ -33,7 +33,7 @@ class Init_data:
                             json_list.append(json.loads(_str))
                         except:
                             pass
-        records = self.__listOfNestedDict2ListOfDict(json_list)
+        records = self.__database(json_list)
         for i in records:
             if not self.CountOfPerP.get(i['actor__login'], 0):
                 self.CountOfPerP.update({i['actor__login']: {}})
@@ -65,32 +65,32 @@ class Init_data:
                 _d[_k] = d[k]
         return _d
 
-    def __listOfNestedDict2ListOfDict(self, a: list):
+    def __database(self, a: list):
         records = []
         for d in a:
             _d = self.__parseDict(d, '')
             records.append(_d)
         return records
 
-    def Result_Of_Users(self, username: str, event: str) -> int:
-        if not self.CountOfPerP.get(username,0):
+    def Result_Of_Users(self, user: str, event: str) -> int:
+        if not self.CountOfPerP.get(user,0):
             return 0
         else:
-            return self.CountOfPerP[username].get(event,0)
+            return self.CountOfPerP[user].get(event,0)
 
-    def Result_Of_Repos(self, reponame: str, event: str) -> int:
-        if not self.CountOfPerR.get(reponame,0):
+    def Result_Of_Repos(self, repo: str, event: str) -> int:
+        if not self.CountOfPerR.get(repo,0):
             return 0
         else:
-            return self.CountOfPerR[reponame].get(event,0)
+            return self.CountOfPerR[repo].get(event,0)
 
-    def Result_Of_UsersAndRepos(self, username: str, reponame: str, event: str) -> int:
-        if not self.CountOfPerP.get(username,0):
+    def Result_Of_UsersAndRepos(self, user: str, repo: str, event: str) -> int:
+        if not self.CountOfPerP.get(user,0):
             return 0
-        elif not self.CountOfPerPPerR[username].get(reponame,0):
+        elif not self.CountOfPerPPerR[user].get(repo,0):
             return 0
         else:
-            return self.CountOfPerPPerR[username][reponame].get(event,0)
+            return self.CountOfPerPPerR[user][repo].get(event,0)
 
 
 class Run:

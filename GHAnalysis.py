@@ -1,105 +1,135 @@
-import argparse
 import json
 import os
-class InputData:
+import argparse
 
-    def __init__(self, path: str = None):
-        self.__dir_addr = path
 
-        if path:
-            print("初次运行初始化")
-            if not os.path.exists(self.__dir_addr):
-                raise RuntimeError("Path doesn't exist.")
-            self.Init()
-            self.Analysis()
-            self.__save2json()
-        else:
-            self.sovle()
+class Init_data:
+    def __init__(self, dic_addr: int = None, reload: int = 0):
+        if reload == 1:
+            self.__init(dic_addr)
+        if dic_addr is None and not os.path.exists('1.json') and not os.path.exists('2.json') and not os.path.exists('3.json'):
+            raise RuntimeError('error: init failed')
+        x = open('1.json', 'r', encoding='utf-8').read()
+        self.CountOfPerP = json.loads(x)
+        x = open('2.json', 'r', encoding='utf-8').read()
+        self.CountOfPerR = json.loads(x)
+        x = open('3.json', 'r', encoding='utf-8').read()
+        self.CountOfPerPPerR = json.loads(x)
 
-    def Init(self):
-        self.__dicts = []
-        for root, dirs, files in os.walk(self.__dir_addr):
-            for file in files:
-                if file[-5:] == '.json' and file[-6:] != '1.json' and file[-6:] != '2.json' and file[-6:] != '3.json':
-                    with open(file, 'r', encoding='utf-8') as f:
-                        self.__jsons = [x for x in f.read().split('\n') if len(x) > 0]
-                        for self.__json in self.__jsons:
-                            self.__dicts.append(json.loads(self.__json))
-
-    def Analysis(self):
-        self.__types = ['PushEvent', 'IssueCommentEvent', 'IssuesEvent', 'PullRequestEvent']
+    def __init(self, dic_addr: str):
+        json_list = []
+        for root, dic, files in os.walk(dic_addr):
+            for f in files:
+                if f[-5:] == '.json':
+                    json_path = f
+                    x = open(dic_addr+'\\'+json_path,
+                             'r', encoding='utf-8').read()
+                    str_list = [_x for _x in x.split('\n') if len(_x) > 0]
+                    for i, _str in enumerate(str_list):
+                        try:
+                            json_list.append(json.loads(_str))
+                        except:
+                            pass
+        records = self.__listOfNestedDict2ListOfDict(json_list)
         self.CountOfPerP = {}
         self.CountOfPerR = {}
-        self.CountOfPerPperR = {}
+        self.CountOfPerPPerR = {}
+        for i in records:
+            if not self.CountOfPerP.get(i['actor__login'], 0):
+                self.CountOfPerP.update({i['actor__login']: {}})
+                self.CountOfPerPPerR.update({i['actor__login']: {}})
+            self.CountOfPerP[i['actor__login']][i['type']
+                                         ] = self.CountOfPerP[i['actor__login']].get(i['type'], 0)+1
+            if not self.CountOfPerR.get(i['repo__name'], 0):
+                self.CountOfPerR.update({i['repo__name']: {}})
+            self.CountOfPerR[i['repo__name']][i['type']
+                                       ] = self.CountOfPerR[i['repo__name']].get(i['type'], 0)+1
+            if not self.CountOfPerPPerR[i['actor__login']].get(i['repo__name'], 0):
+                self.CountOfPerPPerR[i['actor__login']].update({i['repo__name']: {}})
+            self.CountOfPerPPerR[i['actor__login']][i['repo__name']][i['type']
+                                                          ] = self.CountOfPerPPerR[i['actor__login']][i['repo__name']].get(i['type'], 0)+1
+        with open('1.json', 'w', encoding='utf-8') as f:
+            json.dump(self.CountOfPerP,f)
+        with open('2.json', 'w', encoding='utf-8') as f:
+            json.dump(self.CountOfPerR,f)
+        with open('3.json', 'w', encoding='utf-8') as f:
+            json.dump(self.CountOfPerPPerR,f)
 
-        for self.__dict in self.__dicts:
-            # 如果属于四种事件之一 则增加相应值
-            if self.__dict['type'] in self.__types:
-                self.__event = self.__dict['type']
-                self.__name = self.__dict['actor']['login']
-                self.__repo = self.__dict['repo']['name']
-                self.CountOfPerP[self.__name + self.__event] = self.CountOfPerP.get(self.__name + self.__event, 0) + 1
-                self.CountOfPerR[self.__repo + self.__event] = self.CountOfPerR.get(self.__repo + self.__event, 0) + 1
-                self.CountOfPerPperR[self.__name + self.__repo + self.__event] = self.CountOfPerPperR.get(
-                    self.__name + self.__repo + self.__event, 0) + 1
-
-    def __save2json(self):
-        with open("1.json", 'w', encoding='utf-8') as f:
-            json.dump(self.CountOfPerP, f)
-        with open("2.json", 'w', encoding='utf-8') as f:
-            json.dump(self.CountOfPerR, f)
-        with open("3.json", 'w', encoding='utf-8') as f:
-            json.dump(self.CountOfPerPperR, f)
-        print("Save to json files successfully!")
-
-    def sovle(self):
-        self.CountOfPerP = {}
-        self.CountOfPerR = {}
-        self.CountOfPerPperR = {}
-        with open("1.json", encoding='utf-8') as f:
-            self.CountOfPerP = json.load(f)
-        with open("2.json", encoding='utf-8') as f:
-            self.CountOfPerR = json.load(f)
-        with open("1.json", encoding='utf-8') as f:
-            self.CountOfPerPperR = json.load(f)
-
-    # get value from dictionary
-
-    def get_cnt_user(self, user: str, event: str) -> int:
-        return self.CountOfPerP.get(user + event, 0)
-
-    def get_cnt_repo(self, repo: str, event: str) -> int:
-        return self.CountOfPerR.get(repo + event, 0)
-
-    def get_cnt_user_and_repo(self, user, repo, event) -> int:
-        return self.CountOfPerPperR.get(user + repo + event, 0)
-def run():
-    my_parser = argparse.ArgumentParser(description='analysis the json file')
-    my_parser.add_argument('-i', '--init', help='json file path')
-    my_parser.add_argument('-u', '--user', help='username')
-    my_parser.add_argument('-r', '--repo', help='repository name')
-    my_parser.add_argument('-e', '--event', help='type of event')
-    args = my_parser.parse_args()
-
-    if args.init:
-        my_InputData = InputData(path=args.init)
-    else:
-        my_InputData = InputData()
-        if args.event:
-            if args.user:
-                if args.repo:
-                    print(my_InputData.get_cnt_user_and_repo(args.user, args.repo, args.event))
-                else:
-                    print(my_InputData.get_cnt_user(args.user, args.event))
+    def __parseDict(self, d: dict, prefix: str):
+        _d = {}
+        for k in d.keys():
+            if str(type(d[k]))[-6:-2] == 'dict':
+                _d.update(self.__parseDict(d[k], k))
             else:
-                if args.repo:
-                    print(my_InputData.get_cnt_repo(args.repo, args.event))
-                else:
-                    print("missing argument: user or repo")
-        else:
-            print("missing argument: event")
+                _k = f'{prefix}__{k}' if prefix != '' else k
+                _d[_k] = d[k]
+        return _d
 
+    def __listOfNestedDict2ListOfDict(self, a: list):
+        records = []
+        for d in a:
+            _d = self.__parseDict(d, '')
+            records.append(_d)
+        return records
+
+    def Result_Of_Users(self, username: str, event: str) -> int:
+        if not self.CountOfPerP.get(username,0):
+            return 0
+        else:
+            return self.CountOfPerP[username].get(event,0)
+
+    def Result_Of_Repos(self, reponame: str, event: str) -> int:
+        if not self.CountOfPerR.get(reponame,0):
+            return 0
+        else:
+            return self.CountOfPerR[reponame].get(event,0)
+
+    def Result_Of_UsersAndRepos(self, username: str, reponame: str, event: str) -> int:
+        if not self.CountOfPerP.get(username,0):
+            return 0
+        elif not self.CountOfPerPPerR[username].get(reponame,0):
+            return 0
+        else:
+            return self.CountOfPerPPerR[username][reponame].get(event,0)
+
+
+class Run:
+    def __init__(self):
+        self.parser = argparse.ArgumentParser()
+        self.Init_data = None
+        self.argInit()
+        print(self.analyse())
+
+    def argInit(self):
+        self.parser.add_argument('-i', '--init')
+        self.parser.add_argument('-u', '--user')
+        self.parser.add_argument('-r', '--repo')
+        self.parser.add_argument('-e', '--event')
+
+    def analyse(self):
+        if self.parser.parse_args().init:
+            self.Init_data = Init_data(self.parser.parse_args().init, 1)
+            return 0
+        else:
+            if self.Init_data is None:
+                self.Init_data = Init_data()
+            if self.parser.parse_args().event:
+                if self.parser.parse_args().user:
+                    if self.parser.parse_args().repo:
+                        res = self.Init_data.Result_Of_UsersAndRepos(
+                            self.parser.parse_args().user, self.parser.parse_args().repo, self.parser.parse_args().event)
+                    else:
+                        res = self.Init_data.Result_Of_Users(
+                            self.parser.parse_args().user, self.parser.parse_args().event)
+                elif self.parser.parse_args().repo:
+                    res = self.Init_data.Result_Of_Repos(
+                        self.parser.parse_args().repo, self.parser.parse_args().event)
+                else:
+                    raise RuntimeError('error: argument -l or -c are required')
+            else:
+                raise RuntimeError('error: argument -e is required')
+        return res
 
 
 if __name__ == '__main__':
-    run()
+    a = Run()
